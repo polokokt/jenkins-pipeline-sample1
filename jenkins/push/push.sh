@@ -4,6 +4,7 @@ echo "*****************************"
 echo "*** Pushing image ***"
 echo "*****************************"
 
+# push docker image with new version of app, to the Docker Hub repository
 IMAGE="maven-sample-project"
 
 docker login -u $DOCKER_CREDS_USR -p $DOCKER_CREDS_PSW

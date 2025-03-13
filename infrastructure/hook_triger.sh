@@ -1,5 +1,7 @@
 #!/bin/bash
 
+#Script to push as the hook in GitLab repo , to triger pipeline on Jenkins after push operation
+
 # Read stdin (Git passes: oldrev newrev refname)
 read oldrev newrev refname
 
