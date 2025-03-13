@@ -1,0 +1,6 @@
+DROP USER IF EXISTS 'mariadb_user'@'%';
+CREATE USER 'mariadb_user'@'%' IDENTIFIED BY '1234';
+
+GRANT ALL PRIVILEGES ON *.* TO 'mariadb_user'@'%' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+

@@ -1,0 +1,6 @@
+services:
+  app:
+    image: maven-sample-project:$BUILD_ID
+    build:
+      context: .
+      dockerfile: Dockerfile-java

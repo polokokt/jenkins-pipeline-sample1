@@ -1,0 +1,107 @@
+services:
+  jenkins:
+    container_name: jenkins
+    image: jenkins-docker-ansible
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - "./jenkins_home:/var/jenkins_home"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+      - net
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-srv
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: "1234"
+      MYSQL_DATABASE: "testdb"
+      MYSQL_USER: "mariadb_user"
+      MYSQL_PASSWORD: "1234"
+      MYSQL_INITDB_SKIP_TZINFO: "1"
+    command: 
+      - "--default-authentication-plugin=mysql_native_password"
+      - "--require-secure-transport=OFF"  # Disable SSL enforcement
+      - "--ssl=0"  # Explicitly disable SSL
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d
+    networks:
+      - net
+  alpine:
+    build: ./alpine
+    image: alpine-custom
+    container_name: alpine
+    restart: always
+    networks:
+      - net
+    volumes:
+      - "./alpine/backup_script.sh:/tmp/backup_script.sh"
+  web:
+    container_name: web
+    image: alpine-web
+    build: ./jenkins_ansible/web
+    ports:
+      - "80:80"
+    networks:
+      - net 
+  gitlab:
+    image: gitlab/gitlab-ce:latest
+    container_name: gitlab
+    hostname: 'gitlab.example.com'
+    ports:
+      - '8090:80'
+    volumes:
+      - '.srv/gitlab/config:/etc/gitlab'
+      - '.srv/gitlab/logs:/var/log/gitlab'
+      - '.srv/gitlab/data:/var/opt/gitlab'
+    networks:
+      - net
+  sonarqube:
+    image: sonarqube:lts
+    container_name: sonarqube
+    depends_on:
+      - sonarqube-db
+    ports:
+      - "9000:9000"  # SonarQube UI
+      - "9092:9092"  # Optional for analysis
+    environment:
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true  # Disable Elasticsearch bootstrap checks
+      - SONAR_SEARCH_JAVAADDITIONALOPTS=-Xms512m -Xmx512m
+      - SONAR_JDBC_URL=jdbc:postgresql://sonarqube-db:5432/sonarqube
+      - SONAR_JDBC_USERNAME=sonarqube
+      - SONAR_JDBC_PASSWORD=sonarqube
+      - sonar.search.javaAdditionalOpts=-Des.disk.watermark.low=92% -Des.disk.watermark.high=95% -Des.disk.watermark.flood_stage=97%
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    networks:
+      - net
+
+  sonarqube-db:
+    image: postgres:13
+    container_name: sonarqube-db
+    environment:
+      POSTGRES_USER: "sonarqube"
+      POSTGRES_PASSWORD: "sonarqube"
+      POSTGRES_DB: "sonarqube"
+    volumes:
+      - sonarqube_db:/var/lib/postgresql/data
+    networks:
+      - net
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "sonarqube"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+networks:
+  net:  
+
+volumes:
+  db_data:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:
+  sonarqube_db:

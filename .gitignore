@@ -1,0 +1,11 @@
+# Java
+target/
+*.class
+
+# Docker
+.env
+**/.dockerignore
+**/.DS_Store
+
+# Jenkins
+**/jenkins_home/
