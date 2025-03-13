@@ -1,0 +1,4 @@
+services:
+  maven:
+    image: "$DOCKER_CREDS_USR/$IMAGE:$TAG"
+    container_name: maven-app
